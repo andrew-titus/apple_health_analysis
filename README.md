@@ -32,12 +32,16 @@ Once you tap "Export All Data", it may take several minutes to package all of th
 `.zip` file. Name the file `apple_health.zip` (**not whatever the default name is!**) and then use
 your preferred method of secure file transfer (*e.g.*, using
 [AirDrop](https://support.apple.com/guide/security/airdrop-security-sec2261183f4/web) from your
-iPhone to a Mac) to place the file in the root directory of your cloned repository. The
-[.gitignore](./.gitignore) file should take care of this automatically, but nonetheless, for the
-same reasons mentioned earlier about sensitivity of health data, **DO NOT ATTEMPT TO CHECK THIS
-FILE INTO GITHUB!**
+iPhone to a Mac) to place the file in the root directory of your cloned repository. Once in place,
+unzip the file to a directory `apple_health/` in the same root directory. This can simply be done
+with `unzip apple_health.zip` on Mac/Linux, or with whatever tool that you prefer.
 
-Once `uv` is installed and the `apple_health.zip` file is in place, simply run the following to run
+**NOTE**: the [.gitignore](./.gitignore) file should take care of this automatically, but
+nonetheless, for the same reasons mentioned earlier about sensitivity of health data, **DO NOT
+ATTEMPT TO CHECK THE ZIP FILE, NOR THE EXTRACTED ARCHIVE AND ITS CONTENTS, INTO GITHUB!**
+
+Once `uv` is installed and the `apple_health.zip` file has been unzipped to `apple_health/` in the
+root directory of your cloned repository, simply run the following to run
 [Jupyterlab](https://jupyter.org) using the virtual environment defined by [uv.lock](./uv.lock).
 This will ensure that the proper Python version and package dependencies are installed and used
 correctly in the notebooks. See [here](https://docs.astral.sh/uv/guides/integration/jupyter/) for
