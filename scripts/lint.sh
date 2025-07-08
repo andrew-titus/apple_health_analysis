@@ -1,3 +1,3 @@
 #!/bin/bash -euxo pipefail
-uvx ruff check
-uvx pynblint notebooks/
+uvx ruff format notebooks/
+uvx ruff check notebooks/

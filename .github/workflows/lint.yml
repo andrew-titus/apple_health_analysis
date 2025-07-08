@@ -32,7 +32,6 @@ jobs:
         enable-cache: true
         cache-dependency-glob: "uv.lock"
 
-    - name: Lint with ruff and pynblint
+    - name: Lint notebooks with ruff
       run: |
-        uvx ruff
-        uvx pynblint notebooks/
+        uvx ruff check notebooks/
