@@ -1,6 +1,6 @@
-# This workflow will check lint and run tests on supported OSes and Python versions
+# This workflow will run linting on supported OSes and Python versions
 
-name: Lint and Test
+name: Lint
 
 on:
   push:
@@ -9,8 +9,8 @@ on:
     branches: [ $default-branch ]
 
 jobs:
-  lint-and-test:
-    name: Lint and test on ${{ matrix.os }} using Python ${{ matrix.python-version }}
+  lint:
+    name: Lint on ${{ matrix.os }} using Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
