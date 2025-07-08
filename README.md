@@ -54,3 +54,15 @@ uv run --with jupyter jupyter lab
 ### Notebooks
 
 TODO
+
+### Development
+
+We use [ruff](https://docs.astral.sh/ruff/configuration/#jupyter-notebook-discovery) to format and
+lint the Jupyter notebooks. For convenience, this can be run simply by calling:
+
+```bash
+./scripts/lint.sh
+```
+
+The same checks will run as part of any pull request, and will be required to pass in order for the
+PR to be merged.
