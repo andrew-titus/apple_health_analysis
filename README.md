@@ -57,7 +57,7 @@ TODO
 
 ### Development
 
-We use [ruff](https://docs.astral.sh/ruff/configuration/#jupyter-notebook-discovery) to format and
+Use [ruff](https://docs.astral.sh/ruff/configuration/#jupyter-notebook-discovery) to format and
 lint the Jupyter notebooks. For convenience, this can be run simply by calling:
 
 ```bash
