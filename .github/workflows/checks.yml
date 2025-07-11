@@ -53,8 +53,10 @@ jobs:
           echo "Checking if ${notebook} cleared output..."
           uv run --with jupyter jupyter nbconvert --clear-output "${notebook}" --output "converted_${notebook}"
           if cmp --silent -- "${notebook}" "converted_${notebook}"; then
-            echo "${notebook} still had outputs! Please clear them by running ./scripts/lint.sh"
+            echo "${notebook} FAIL, as it still had cell outputs! Please clear them by running ./scripts/lint.sh"
             failed=1
+          else
+            echo "${notebook} PASS"
           fi
         done
         popd
