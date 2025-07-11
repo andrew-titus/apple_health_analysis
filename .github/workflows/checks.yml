@@ -52,8 +52,8 @@ jobs:
         for notebook in *.ipynb; do
           echo "Checking if ${notebook} cleared output..."
           uv run --with jupyter jupyter nbconvert --clear-output "${notebook}" --output "converted_${notebook}"
-          if cmp --verbose -- "${notebook}" "converted_${notebook}"; then
-            echo "Exit status was $?"
+          cmp --quiet -- "${notebook}" "converted_${notebook}"
+          if [[ $? -ne 0 ]]; then
             echo "${notebook} FAIL, as it still had cell outputs! Please clear them by running ./scripts/lint.sh"
             failed=1
           else
