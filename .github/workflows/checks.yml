@@ -47,15 +47,15 @@ jobs:
 
     - name: Check if notebook output is cleared
       run: |
-        failed=0 \
-        for notebook in notebooks/*; do \
-          echo "Checking if ${notebook} cleared output..." \
-          uv run --with jupyter jupyter nbconvert --clear-output "notebooks/${notebook}" --output "converted_${notebook}" \
-          if cmp --silent -- "notebooks/${notebook}" "converted_${notebook}"; then \
-            echo "${notebook} still had outputs! Please clear them by running ./scripts/lint.sh" \
-            failed=1 \
-          fi \
-        done \
+        failed=0
+        for notebook in notebooks/*; do
+          echo "Checking if ${notebook} cleared output..."
+          uv run --with jupyter jupyter nbconvert --clear-output "notebooks/${notebook}" --output "converted_${notebook}"
+          if cmp --silent -- "notebooks/${notebook}" "converted_${notebook}"; then
+            echo "${notebook} still had outputs! Please clear them by running ./scripts/lint.sh"
+            failed=1
+          fi
+        done
         exit "${failed}"
 
     - name: Lint notebooks with ruff
