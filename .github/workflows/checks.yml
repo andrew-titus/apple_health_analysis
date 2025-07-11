@@ -1,0 +1,61 @@
+# This workflow will run linting and testing on supported OSes and Python versions, as well as
+# adding a code coverage comment
+
+name: Checks
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  # Manually trigger in UI
+
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+# `contents` is for permission to the contents of the repository.
+# `pull-requests` is for permission to pull request
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  lint-and-test:
+    name: Lint and test on ${{ matrix.os }} using Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        # Install a specific version of uv.
+        version: "0.7.19"
+        python-version: ${{ matrix.python-version }}
+        # Enable caching, invalidating when the uv lock changes
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Lint src with ruff
+      run: |
+        uvx ruff check src/
+
+    - name: Lint notebooks with ruff
+      run: |
+        uvx ruff check notebooks/
+
+    - name: Test src with pytest and build coverage file
+      run: |
+        uv run pytest --junitxml=pytest-${{ matrix.os }}-py${{ matrix.python-version }}.xml --cov=src/ --cov-report term-missing:skip-covered tests/ | tee pytest-coverage-${{ matrix.os }}-py${{ matrix.python-version }}.txt
+
+    - name: Pytest coverage comment (only on Ubuntu runners)
+      if: ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.python-version }} == '3.13'
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: ./pytest-coverage-ubuntu-latest-py3.13.txt
+        junitxml-path: ./pytest-ubuntu-latest-py3.13.xml
