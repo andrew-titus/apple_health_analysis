@@ -8,8 +8,10 @@ from apple_health_analysis.record import Record, get_xml_datetime
 
 
 INVALID_RECORD_NO_TYPE = '<Record value="123.456"></Record>'
-VALID_RECORD = """<Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Test Source" sourceVersion="1.234" device="Test Device" unit="count/min" creationDate="2025-01-03 01:23:45 -0400" startDate="2025-01-01 01:23:45 -0400" endDate="2025-01-02 01:23:45 -0400" value="123.456">
+VALID_RECORD_FLOAT = """<Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Test Source" sourceVersion="1.234" device="Test Device" unit="count/min" creationDate="2025-01-03 01:23:45 -0400" startDate="2025-01-01 01:23:45 -0400" endDate="2025-01-02 01:23:45 -0400" value="123.456">
   <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="0"/>
+</Record>"""
+VALID_RECORD_STR = """<Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test Source 2" sourceVersion="123" creationDate="2024-12-31 23:59:59 +0400" startDate="2024-12-31 23:59:58 +0400" endDate="2024-12-31 23:59:58 +0400" value="HKCategoryValueSleepAnalysisAsleepUnspecified">
 </Record>"""
 
 
@@ -23,7 +25,7 @@ class TestRecord(unittest.TestCase):
         with self.subTest(name="no key"):
             self.assertIsNone(get_xml_datetime(element, "creationDate"))
 
-        with self.subTest(name="valid format"):
+        with self.subTest(name="valid float"):
             self.assertEqual(
                 get_xml_datetime(element, "startDate"),
                 datetime(
@@ -46,10 +48,11 @@ class TestRecord(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 Record.from_xml_element(ET.fromstring(INVALID_RECORD_NO_TYPE))
 
-        with self.subTest(valid=True):
-            record = Record.from_xml_element(ET.fromstring(VALID_RECORD))
+        with self.subTest(valid=True, val="float"):
+            record = Record.from_xml_element(ET.fromstring(VALID_RECORD_FLOAT))
             self.assertEqual(record.record_type, "HKQuantityTypeIdentifierHeartRate")
             self.assertEqual(record.source_name, "Test Source")
+            self.assertAlmostEqual(record.value, 123.456)
             self.assertEqual(record.unit, "count/min")
             self.assertEqual(
                 record.creation_date,
@@ -85,5 +88,49 @@ class TestRecord(unittest.TestCase):
                     minute=23,
                     second=45,
                     tzinfo=timezone(timedelta(hours=-4)),
+                ),
+            )
+
+        with self.subTest(valid=True, val="str"):
+            record = Record.from_xml_element(ET.fromstring(VALID_RECORD_STR))
+            self.assertEqual(
+                record.record_type, "HKCategoryTypeIdentifierSleepAnalysis"
+            )
+            self.assertEqual(record.source_name, "Test Source 2")
+            self.assertIsNone(record.unit)
+            self.assertEqual(
+                record.creation_date,
+                datetime(
+                    2024,
+                    12,
+                    31,
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    tzinfo=timezone(timedelta(hours=4)),
+                ),
+            )
+            self.assertEqual(
+                record.start_date,
+                datetime(
+                    2024,
+                    12,
+                    31,
+                    hour=23,
+                    minute=59,
+                    second=58,
+                    tzinfo=timezone(timedelta(hours=4)),
+                ),
+            )
+            self.assertEqual(
+                record.end_date,
+                datetime(
+                    2024,
+                    12,
+                    31,
+                    hour=23,
+                    minute=59,
+                    second=58,
+                    tzinfo=timezone(timedelta(hours=4)),
                 ),
             )

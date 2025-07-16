@@ -24,7 +24,7 @@ class Record(BaseModel):
     record_type: str
 
     # Value and units for the record
-    value: float | None = None
+    value: float | str | None = None
     unit: str | None = None
 
     # Source of record (e.g., a third-party app)
@@ -38,9 +38,16 @@ class Record(BaseModel):
     @classmethod
     def from_xml_element(cls, element: Element) -> "Record":
         """Create a Record object from an XML element describing it."""
+        parsed_value: float | str | None = None
+        if "value" in element.attrib:
+            try:
+                parsed_value = float(element.attrib["value"])
+            except ValueError:
+                parsed_value = element.attrib["value"]
+
         return cls(
             record_type=element.attrib.get("type"),
-            value=element.attrib.get("value"),
+            value=parsed_value,
             unit=element.attrib.get("unit"),
             source_name=element.attrib.get("sourceName"),
             start_date=get_xml_datetime(element, "startDate"),
