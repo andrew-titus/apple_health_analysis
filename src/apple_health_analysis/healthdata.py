@@ -3,6 +3,9 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 from pydantic import BaseModel, Field
+from tqdm import tqdm
+
+from apple_health_analysis.record import RECORD_TAG, Record
 
 
 # ../../../apple_health
@@ -28,15 +31,30 @@ class HealthData(BaseModel):
     # TODO: other things like ClinicalRecord?
 
     @classmethod
-    def from_xml_export(cls, export: os.PathLike) -> "HealthData":
-        """Parse an XML export file into a HealthData object."""
+    def from_xml_export(
+        cls, export: os.PathLike, show_tqdm: bool = True
+    ) -> "HealthData":
+        """Parse an XML export file into a HealthData object.
+
+        Can optionally show progress with a [tqdm](https://github.com/tqdm/tqdm) progress bar.
+        Defaults to True.
+        """
         export_tree = ET.parse(export)
         export_root = export_tree.getroot()
         if export_root.tag != "HealthData":
             raise ValueError(f"Unable to find HealthData tag in {export}")
 
-        # TODO
-        return None
+        records_list: list[Record] = list()
+
+        elem_iter = tqdm(export_root) if show_tqdm else export_root
+        for elem in elem_iter:
+            # TODO: handle other tags as well
+            if elem.tag == RECORD_TAG:
+                records_list.append(Record.from_xml_element(elem))
+
+        return cls(
+            records=pd.DataFrame([dict(record) for record in records_list]),
+        )
 
 
 def get_healthdata() -> HealthData:

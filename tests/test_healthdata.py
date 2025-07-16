@@ -7,7 +7,7 @@ from unittest.mock import patch
 from apple_health_analysis.healthdata import get_healthdata
 
 
-class TestExport(unittest.TestCase):
+class TestHealthData(unittest.TestCase):
     def test_get_healthdata(self) -> None:
         """Test that Apple Health export parsing works as expected."""
         mock_health_dir = mkdtemp()
