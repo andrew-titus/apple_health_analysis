@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from xml.etree.ElementTree import Element
 
 from pydantic import BaseModel
@@ -12,7 +12,12 @@ def get_xml_datetime(element: Element, key: str) -> datetime | None:
     """Get a datetime object for the given key in the XML element, if any."""
     xml_datetime: datetime | None = None
     if key in element.attrib:
-        xml_datetime = datetime.strptime(element.attrib[key], RECORD_DATETIME_FMT)
+        xml_datetime_pre = datetime.strptime(element.attrib[key], RECORD_DATETIME_FMT)
+
+        # Pandas JSON serialization doesn't handle timezones correctly (dropping to UTC)
+        xml_datetime = datetime.fromtimestamp(
+            xml_datetime_pre.timestamp(), tz=timezone.utc
+        )
     return xml_datetime
 
 

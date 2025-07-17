@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import os
 import shutil
 from tempfile import mkdtemp
@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from apple_health_analysis.healthdata import get_healthdata
+from apple_health_analysis.healthdata import HealthData, get_healthdata
 
 
 VALID_EXPORT_XML = """<HealthData>
@@ -22,6 +22,9 @@ VALID_EXPORT_XML = """<HealthData>
 
 
 class TestHealthData(unittest.TestCase):
+    # Allow visualization of larger diffs
+    maxDiff = None
+
     def test_get_healthdata(self) -> None:
         """Test that Apple Health export parsing works as expected."""
         mock_health_dir = mkdtemp()
@@ -46,7 +49,15 @@ class TestHealthData(unittest.TestCase):
                 with self.subTest(name="Valid HealthData"):
                     with open(os.path.join(mock_health_dir, "export.xml"), "w") as fd:
                         fd.write(VALID_EXPORT_XML)
-                    healthdata = get_healthdata()
+                    cache = os.path.join(mock_health_dir, "export_cache")
+
+                    with (
+                        self.subTest(subname="Cache load failure"),
+                        self.assertRaises(FileNotFoundError),
+                    ):
+                        HealthData.from_cache(cache)
+
+                    healthdata = get_healthdata(use_cache=False)
 
                     expected_records_df = pd.DataFrame(
                         {
@@ -57,24 +68,25 @@ class TestHealthData(unittest.TestCase):
                             "value": [123.456, 100],
                             "unit": ["count/min", "count/min"],
                             "source_name": ["Test Source", "Test Source"],
+                            # Note implicit timezone change to UTC below
                             "start_date": [
                                 datetime(
                                     2025,
                                     1,
                                     1,
-                                    hour=1,
+                                    hour=5,
                                     minute=23,
                                     second=45,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                                 datetime(
                                     2025,
                                     1,
                                     1,
-                                    hour=2,
+                                    hour=6,
                                     minute=34,
                                     second=56,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                             ],
                             "end_date": [
@@ -82,19 +94,19 @@ class TestHealthData(unittest.TestCase):
                                     2025,
                                     1,
                                     2,
-                                    hour=1,
+                                    hour=5,
                                     minute=23,
                                     second=45,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                                 datetime(
                                     2025,
                                     1,
                                     2,
-                                    hour=2,
+                                    hour=6,
                                     minute=34,
                                     second=56,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                             ],
                             "creation_date": [
@@ -102,23 +114,45 @@ class TestHealthData(unittest.TestCase):
                                     2025,
                                     1,
                                     3,
-                                    hour=1,
+                                    hour=5,
                                     minute=23,
                                     second=45,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                                 datetime(
                                     2025,
                                     1,
                                     3,
-                                    hour=2,
+                                    hour=6,
                                     minute=34,
                                     second=56,
-                                    tzinfo=timezone(timedelta(hours=-4)),
+                                    tzinfo=timezone.utc,
                                 ),
                             ],
                         }
                     )
                     self.assertTrue(healthdata.records.equals(expected_records_df))
+
+                    with self.subTest(use_cache=False):
+                        healthdata_reload = get_healthdata(use_cache=False)
+
+                        self.assertEqual(healthdata, healthdata_reload)
+                        self.assertTrue(
+                            healthdata_reload.records.equals(expected_records_df)
+                        )
+
+                    with self.subTest(use_cache=True):
+                        healthdata_from_cache = get_healthdata(use_cache=True)
+
+                        self.assertEqual(healthdata, healthdata_from_cache)
+                        self.assertTrue(
+                            healthdata_from_cache.records.equals(expected_records_df)
+                        )
+
+                    with (
+                        self.subTest(subname="Re-cache failure"),
+                        self.assertRaises(FileExistsError),
+                    ):
+                        healthdata.save_cache(cache)
         finally:
             shutil.rmtree(mock_health_dir)

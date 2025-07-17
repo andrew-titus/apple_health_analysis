@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import xml.etree.ElementTree as ET
 
 import pandas as pd
@@ -34,6 +35,13 @@ class HealthData(BaseModel):
     # TODO: Workouts
 
     # TODO: other things like ClinicalRecord?
+
+    def __eq__(self, other: object) -> bool:
+        """Check if this HealthData object is equivalent to another."""
+        if not isinstance(other, HealthData):
+            return False
+        else:
+            return self.records.equals(other.records)
 
     @classmethod
     def from_xml_export(cls, export: os.PathLike, verbose: bool = True) -> "HealthData":
@@ -82,7 +90,9 @@ class HealthData(BaseModel):
 
         records_jsonl = os.path.join(cache, "records.jsonl")
         logger.debug("Saving records to cache at %s...", records_jsonl)
-        self.records.to_json(records_jsonl, orient="records", lines=True)
+        self.records.to_json(
+            records_jsonl, orient="records", lines=True, date_format="iso"
+        )
 
         logger.debug("DONE saving HealthData to cache at %s", cache)
 
@@ -100,7 +110,12 @@ class HealthData(BaseModel):
             raise FileNotFoundError(f"Records JSONL not found at {records_jsonl}")
 
         logger.debug("Loading records from cache at %s...", records_jsonl)
-        records_df = pd.read_json(records_jsonl, orient="records", lines=True)
+        records_df = pd.read_json(
+            records_jsonl,
+            orient="records",
+            lines=True,
+            convert_dates=["start_date", "end_date", "creation_date"],
+        )
 
         logger.debug("Creating HealthData...")
         return cls(records=records_df)
@@ -116,9 +131,13 @@ def get_healthdata(verbose: bool = True, use_cache: bool = True) -> HealthData:
             logger.info("Using cache found at %s", cache)
             return HealthData.from_cache(cache)
         else:
-            logger.info("Ignoring cache found at %s, since use_cache=False", cache)
+            logger.info(
+                "Deleting and rebuilding cache found at %s, since use_cache=False",
+                cache,
+            )
+            shutil.rmtree(cache)
     else:
-        logger.info("No cache found at %s; creating from scratch")
+        logger.info("No cache found at %s; creating from scratch", cache)
 
     export = os.path.join(APPLE_HEALTH_DIR, "export.xml")
     if not os.path.isfile(export):

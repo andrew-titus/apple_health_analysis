@@ -134,3 +134,8 @@ class TestRecord(unittest.TestCase):
                     tzinfo=timezone(timedelta(hours=4)),
                 ),
             )
+
+            # Regression test for Pandas not serializing timezone info
+            self.assertEqual(record.start_date.tzinfo, timezone.utc)
+            self.assertEqual(record.end_date.tzinfo, timezone.utc)
+            self.assertEqual(record.creation_date.tzinfo, timezone.utc)
