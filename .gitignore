@@ -210,3 +210,6 @@ __marimo__/
 ## CUSTOM
 apple_health.zip
 apple_health/
+
+# vim
+*.sw*
